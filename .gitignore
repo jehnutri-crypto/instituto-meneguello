@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitMente — Gestão de Pacientes</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f0eb;display:flex;height:100vh;overflow:hidden;font-size:14px}
+
+/* SIDEBAR */
+.sidebar{width:240px;min-width:240px;background:#1e1e1e;color:#fff;display:flex;flex-direction:column;overflow-y:auto;height:100vh}
+.sb-logo{padding:20px 20px 16px}
+.sb-logo-dot{display:inline-block;width:10px;height:10px;background:#c8832a;border-radius:50%;margin-right:6px}
+.sb-logo-name{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.sb-logo-sub{font-size:10px;color:#888;letter-spacing:.15em;text-transform:uppercase;margin-top:4px;padding-left:16px}
+
+.sb-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 16px;border-top:1px solid #333;border-bottom:1px solid #333}
+.sb-stat{background:#2a2a2a;border-radius:8px;padding:10px 12px}
+.sb-stat-val{font-size:22px;font-weight:700;color:#fff}
+.sb-stat-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+
+.sb-section{font-size:10px;color:#666;letter-spacing:.12em;text-transform:uppercase;padding:16px 20px 6px;font-weight:600}
+.sb-item{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;cursor:pointer;border-radius:8px;margin:2px 8px;color:#aaa;font-size:13px;transition:all .15s}
+.sb-item:hover{background:#2a2a2a;color:#fff}
+.sb-item.active{background:#c8832a;color:#fff;font-weight:500}
+.sb-item-count{font-size:12px;opacity:.8}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* TOPBAR */
+.topbar{background:#fff;border-bottom:1px solid #e8e0d8;padding:12px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.search-wrap{flex:1;position:relative}
+.search-wrap input{width:100%;padding:10px 14px 10px 38px;border:1px solid #e0d8d0;border-radius:10px;font-size:14px;color:#333;outline:none;background:#faf8f5;font-family:inherit}
+.search-wrap input:focus{border-color:#c8832a;background:#fff}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#aaa;font-size:14px}
+.btn-novo{background:#c8832a;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;transition:opacity .15s}
+.btn-novo:hover{opacity:.9}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:0}
+
+.list-header{padding:12px 20px;font-size:13px;color:#888;border-bottom:1px solid #ede8e0;background:#faf8f5}
+.list-header strong{color:#333}
+
+/* TABLE */
+.table-wrap{width:100%}
+table{width:100%;border-collapse:collapse}
+thead tr{background:#faf8f5;border-bottom:1px solid #ede8e0}
+th{padding:10px 16px;font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.08em;text-align:left;white-space:nowrap}
+tbody tr{border-bottom:1px solid #f0ebe3;background:#fff;cursor:pointer;transition:background .1s}
+tbody tr:hover{background:#fdf9f4}
+tbody tr.selected{background:#fdf4e8}
+td{padding:12px 16px;vertical-align:middle}
+
+/* AVATAR */
+.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.pac-cell{display:flex;align-items:center;gap:10px}
+.pac-info{}
+.pac-name{font-size:14px;font-weight:500;color:#1a1a1a}
+.pac-num{font-size:11px;color:#aaa;margin-top:1px}
+
+.contact-tel{font-size:13px;color:#333;font-weight:500}
+.contact-email{font-size:11px;color:#aaa;margin-top:2px}
+
+/* OBJETIVO BADGE */
+.obj-badge{display:inline-block;font-size:12px;font-weight:500;padding:3px 10px;border-radius:6px}
+.obj-emag{color:#c8832a;background:#fdf0e0}
+.obj-hidro{color:#2a7ab5;background:#e0f0fd}
+.obj-defi{color:#2a9b6a;background:#e0fdf0}
+.obj-hiper{color:#7a4fb5;background:#f0e8fd}
+.obj-perf{color:#b54f7a;background:#fde8f0}
+.obj-outro{color:#888;background:#f5f5f5}
+
+/* ENDEREÇO */
+.end-cell{font-size:13px;color:#555;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* COMPROMISSO */
+.comp-wrap{display:flex;align-items:center;gap:8px}
+.comp-bar-bg{width:70px;height:5px;background:#ede8e0;border-radius:3px;overflow:hidden}
+.comp-bar{height:100%;border-radius:3px;background:#c8832a}
+.comp-num{font-size:12px;color:#888;min-width:16px}
+
+.cad-cell{font-size:12px;color:#aaa;white-space:nowrap}
+
+/* PAINEL DE DETALHE */
+.detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.detail-box{background:#fff;border-radius:14px;width:100%;max-width:500px;padding:24px;position:relative;max-height:90vh;overflow-y:auto}
+.detail-box h2{font-size:16px;font-weight:600;margin-bottom:16px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.detail-full{grid-column:1/-1}
+.detail-row{background:#faf8f5;border-radius:8px;padding:10px 12px;border:1px solid #ede8e0}
+.detail-key{font-size:11px;color:#aaa;margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em}
+.detail-val{font-size:13px;font-weight:500;color:#1a1a1a}
+.detail-close{position:absolute;top:16px;right:16px;background:none;border:1px solid #ddd;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;color:#666}
+.detail-header-row{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.detail-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
+
+/* MODAL FORM */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:#fff;border-radius:14px;width:100%;max-width:520px;padding:24px;max-height:90vh;overflow-y:auto}
+.modal-box h2{font-size:16px;font-weight:600;margin-bottom:18px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-full{grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.form-group input,.form-group select,.form-group textarea{font-size:14px;padding:9px 11px;border:1px solid #ddd;border-radius:8px;font-family:inherit;color:#1a1a1a;background:#faf8f5;outline:none;transition:border .15s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#c8832a;background:#fff}
+.form-group textarea{height:70px;resize:none}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid #eee}
+.btn-cancel{background:none;border:1px solid #ddd;border-radius:8px;padding:8px 18px;font-size:14px;cursor:pointer;color:#666;font-family:inherit}
+.btn-save{background:#c8832a;color:#fff;border:none;border-radius:8px;padding:8px 22px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-save:hover{opacity:.9}
+
+.hidden{display:none!important}
+
+/* COMP SLIDER */
+.comp-slider-wrap{display:flex;align-items:center;gap:10px}
+.comp-slider-wrap input[type=range]{flex:1;accent-color:#c8832a}
+.comp-slider-wrap span{font-size:13px;font-weight:600;color:#c8832a;min-width:20px}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-logo">
+    <div><span class="sb-logo-dot"></span><span class="sb-logo-name">FitMente</span></div>
+    <div class="sb-logo-sub">Gestão de Pacientes</div>
+  </div>
+
+  <div class="sb-stats">
+    <div class="sb-stat">
+      <div class="sb-stat-val" id="sb-total">0</div>
+      <div class="sb-stat-label">Pacientes</div>
+    </div>
+    <div class="sb-stat">
+      <div class="sb-stat-val" id="sb-filtrados">0</div>
+      <div class="sb-stat-label">Filtrados</div>
+    </div>
+  </div>
+
+  <div class="sb-section">Objetivo</div>
+  <div class="sb-item active" onclick="setFiltro('obj','',this)" id="fi-obj-todos">
+    <span>Todos</span><span class="sb-item-count" id="fc-obj-todos">0</span>
+  </div>
+  <div class="sb-item" onclick="setFiltro('obj','Emagrecimento',this)" id="fi-obj-emag">
+    <span>Emagrecimento</span><span class="sb-item-count" id="fc-obj-emag">0</span>
+  </div>
+  <div class="sb-item" onclick="setFiltro('obj','Hipertrofia',this)" id="fi-obj-hiper">
+    <span>Hipertrofia</span><span class="sb-item-count" id="fc-obj-hiper">0</span>
+  </div>
+  <div class="sb-item" onclick="setFiltro('obj','Definição muscular',this)" id="fi-obj-defi">
+    <span>Definição muscular</span><span class="sb-item-count" id="fc-obj-defi">0</span>
+  </div>
+  <div class="sb-item" onclick="setFiltro('obj','Recomposição corporal',this)" id="fi-obj-recomp">
+    <span>Recomposição corporal</span><span class="sb-item-count" id="fc-obj-recomp">0</span>
+  </div>
+  <div class="sb-item" onclick="setFiltro('obj','Saúde geral',this)" id="fi-obj-saude">
+    <span>Saúde geral</span><span class="sb-item-count" id="fc-obj-saude">0</span>
+  </div>
+
+  <div class="sb-section">Exercício</div>
+  <div class="sb-item active" onclick="setFiltro('exc','',this)" id="fi-exc-todos" style="background:transparent;color:#aaa">
+    <span>Todos</span><span class="sb-item-count" id="fc-exc-todos">0</span>
+  </div>
+  <div class="sb-item" onclick="setFiltro('exc','Pratica exercício',this)" id="fi-exc-sim">
+    <span>Pratica exercício</span><span class="sb-item-count" id="fc-exc-sim">0</span>
+  </div>
+  <div class="sb-item" onclick="setFiltro('exc','Não pratica',this)" id="fi-exc-nao">
+    <span>Não pratica</span><span class="sb-item-count" id="fc-exc-nao">0</span>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="search" placeholder="Buscar por nome, email, WhatsApp ou cidade..." oninput="render()">
+    </div>
+    <button class="btn-novo" onclick="openModal()">+ Novo Paciente</button>
+  </div>
+
+  <div class="list-header" id="list-header">Mostrando <strong>0</strong> de <strong>0</strong> pacientes</div>
+
+  <div class="content">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Paciente</th>
+            <th>Contato</th>
+            <th>Objetivo</th>
+            <th>Cidade / Estado / País</th>
+            <th>Compromisso</th>
+            <th>Cadastro</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="detail-overlay hidden" id="detail-overlay" onclick="closeDetail(event)">
+  <div class="detail-box" id="detail-box">
+    <button class="detail-close" onclick="document.getElementById('detail-overlay').classList.add('hidden')">Fechar</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- MODAL FORM -->
+<div class="modal-overlay hidden" id="modal-overlay" onclick="closeModalOut(event)">
+  <div class="modal-box">
+    <h2 id="modal-title">Novo Paciente</h2>
+    <input type="hidden" id="f-id">
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Nome completo *</label><input type="text" id="f-nome" placeholder="Ex: Maria Silva"></div>
+      <div class="form-group"><label>WhatsApp *</label><input type="text" id="f-whats" placeholder="(11) 99999-9999"></div>
+      <div class="form-group"><label>E-mail</label><input type="text" id="f-email" placeholder="email@exemplo.com"></div>
+      <div class="form-group"><label>Objetivo *</label>
+        <select id="f-obj">
+          <option value="">Selecione</option>
+          <option>Emagrecimento</option>
+          <option>Hipertrofia</option>
+          <option>Definição muscular</option>
+          <option>Recomposição corporal</option>
+          <option>Saúde geral</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Exercício</label>
+        <select id="f-exc">
+          <option value="">Selecione</option>
+          <option>Pratica exercício</option>
+          <option>Não pratica</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Cidade</label><input type="text" id="f-cidade" placeholder="Ex: Praia Grande"></div>
+      <div class="form-group"><label>Estado (UF)</label><input type="text" id="f-estado" placeholder="Ex: SP" maxlength="2"></div>
+      <div class="form-group"><label>País</label><input type="text" id="f-pais" placeholder="Ex: Brasil"></div>
+      <div class="form-group form-full">
+        <label>Compromisso (0–10)</label>
+        <div class="comp-slider-wrap">
+          <input type="range" min="0" max="10" value="5" id="f-comp" oninput="document.getElementById('f-comp-val').textContent=this.value">
+          <span id="f-comp-val">5</span>
+        </div>
+      </div>
+      <div class="form-group form-full"><label>Observações</label><textarea id="f-obs" placeholder="Informações adicionais..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="savePaciente()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS=[
+  {bg:'#3a7d6e',fg:'#fff'},{bg:'#4a6da8',fg:'#fff'},{bg:'#8b5e3c',fg:'#fff'},
+  {bg:'#7a4fb5',fg:'#fff'},{bg:'#b54f7a',fg:'#fff'},{bg:'#2a9b6a',fg:'#fff'},
+  {bg:'#c8832a',fg:'#fff'},{bg:'#5a7a3a',fg:'#fff'},{bg:'#a83a3a',fg:'#fff'}
+];
+const OBJ_CLASS={
+  'Emagrecimento':'obj-emag','Hipertrofia':'obj-hiper',
+  'Definição muscular':'obj-defi','Recomposição corporal':'obj-hidro',
+  'Saúde geral':'obj-outro'
+};
+
+let patients=JSON.parse(localStorage.getItem('nb_patients')||'[]');
+let filtroObj='', filtroExc='', selectedId=null;
+let seq=patients.length?Math.max(...patients.map(p=>p.seq||0)):0;
+
+function colorFor(n){let h=0;for(let c of(n||''))h+=c.charCodeAt(0);return COLORS[h%COLORS.length]}
+function initials(n){return(n||'?').trim().split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()}
+function pad(n){return String(n).padStart(4,'0')}
+function persist(){localStorage.setItem('nb_patients',JSON.stringify(patients))}
+function fmtDate(s){if(!s)return'—';const[y,m,d]=s.split('-');return`${d}/${m}/${y}`}
+
+function updateSidebar(){
+  const total=patients.length;
+  const filtered=getFiltered().length;
+  document.getElementById('sb-total').textContent=total;
+  document.getElementById('sb-filtrados').textContent=filtered;
+
+  const objs={'Emagrecimento':0,'Hipertrofia':0,'Definição muscular':0,'Recomposição corporal':0,'Saúde geral':0};
+  const excs={'Pratica exercício':0,'Não pratica':0};
+  patients.forEach(p=>{
+    if(objs[p.obj]!==undefined)objs[p.obj]++;
+    if(excs[p.exc]!==undefined)excs[p.exc]++;
+  });
+  document.getElementById('fc-obj-todos').textContent=total;
+  document.getElementById('fc-obj-emag').textContent=objs['Emagrecimento'];
+  document.getElementById('fc-obj-hiper').textContent=objs['Hipertrofia'];
+  document.getElementById('fc-obj-defi').textContent=objs['Definição muscular'];
+  document.getElementById('fc-obj-recomp').textContent=objs['Recomposição corporal'];
+  document.getElementById('fc-obj-saude').textContent=objs['Saúde geral'];
+  document.getElementById('fc-exc-todos').textContent=total;
+  document.getElementById('fc-exc-sim').textContent=excs['Pratica exercício'];
+  document.getElementById('fc-exc-nao').textContent=excs['Não pratica'];
+}
+
+function getFiltered(){
+  const q=(document.getElementById('search')?.value||'').toLowerCase();
+  return patients.filter(p=>{
+    const txt=(p.nome+p.whats+p.email+p.cidade+p.estado+p.pais+p.obj).toLowerCase();
+    return(!q||txt.includes(q))&&(!filtroObj||p.obj===filtroObj)&&(!filtroExc||p.exc===filtroExc);
+  });
+}
+
+function render(){
+  const list=getFiltered();
+  const total=patients.length;
+  document.getElementById('list-header').innerHTML=`Mostrando <strong>${list.length}</strong> de <strong>${total}</strong> pacientes`;
+  updateSidebar();
+
+  const tbody=document.getElementById('tbody');
+  if(!list.length){
+    tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:40px;color:#aaa">Nenhum paciente encontrado.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML=list.map(p=>{
+    const c=colorFor(p.nome);
+    const objCls=OBJ_CLASS[p.obj]||'obj-outro';
+    const loc=[p.cidade,p.estado?p.estado.toUpperCase():null,p.pais].filter(Boolean).join(', ');
+    const comp=Number(p.comp)||0;
+    const pct=comp*10;
+    return`<tr onclick="showDetail('${p.id}')" class="${p.id===selectedId?'selected':''}">
+      <td>
+        <div class="pac-cell">
+          <div class="avatar" style="background:${c.bg};color:${c.fg}">${initials(p.nome)}</div>
+          <div class="pac-info">
+            <div class="pac-name">${p.nome}</div>
+            <div class="pac-num">#${pad(p.seq||0)}</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <div class="contact-tel">${p.whats||'—'}</div>
+        <div class="contact-email">${p.email||''}</div>
+      </td>
+      <td><span class="obj-badge ${objCls}">${p.obj||'—'}</span></td>
+      <td><div class="end-cell">${loc||'—'}</div></td>
+      <td>
+        <div class="comp-wrap">
+          <div class="comp-bar-bg"><div class="comp-bar" style="width:${pct}%"></div></div>
+          <span class="comp-num">${comp}</span>
+        </div>
+      </td>
+      <td><div class="cad-cell">${fmtDate(p.cadastro)}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+function setFiltro(tipo,val,el){
+  if(tipo==='obj'){
+    filtroObj=val;
+    document.querySelectorAll('[id^="fi-obj-"]').forEach(x=>x.classList.remove('active'));
+  } else {
+    filtroExc=val;
+    document.querySelectorAll('[id^="fi-exc-"]').forEach(x=>x.classList.remove('active'));
+  }
+  el.classList.add('active');
+  render();
+}
+
+function showDetail(id){
+  selectedId=selectedId===id?null:id;
+  render();
+  if(!selectedId){document.getElementById('detail-overlay').classList.add('hidden');return}
+  const p=patients.find(x=>x.id===id);if(!p)return;
+  const c=colorFor(p.nome);
+  const loc=[p.cidade,p.estado?p.estado.toUpperCase():null,p.pais].filter(Boolean).join(', ');
+  const comp=Number(p.comp)||0;
+  document.getElementById('detail-content').innerHTML=`
+    <div class="detail-header-row">
+      <div class="detail-avatar" style="background:${c.bg};color:${c.fg}">${initials(p.nome)}</div>
+      <div>
+        <div style="font-size:17px;font-weight:600">${p.nome}</div>
+        <div style="font-size:12px;color:#aaa;margin-top:2px">#${pad(p.seq||0)} · Cadastro: ${fmtDate(p.cadastro)}</div>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-row"><div class="detail-key">WhatsApp</div><div class="detail-val">${p.whats||'—'}</div></div>
+      <div class="detail-row"><div class="detail-key">E-mail</div><div class="detail-val">${p.email||'—'}</div></div>
+      <div class="detail-row"><div class="detail-key">Objetivo</div><div class="detail-val">${p.obj||'—'}</div></div>
+      <div class="detail-row"><div class="detail-key">Exercício</div><div class="detail-val">${p.exc||'—'}</div></div>
+      <div class="detail-row detail-full"><div class="detail-key">Localização</div><div class="detail-val">${loc||'—'}</div></div>
+      <div class="detail-row detail-full">
+        <div class="detail-key">Compromisso</div>
+        <div class="detail-val" style="display:flex;align-items:center;gap:10px">
+          <div style="flex:1;height:6px;background:#ede8e0;border-radius:3px;overflow:hidden"><div style="width:${comp*10}%;height:100%;background:#c8832a;border-radius:3px"></div></div>
+          <span>${comp}/10</span>
+        </div>
+      </div>
+      ${p.obs?`<div class="detail-row detail-full"><div class="detail-key">Observações</div><div class="detail-val">${p.obs}</div></div>`:''}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn-cancel" style="flex:1" onclick="editPaciente('${p.id}')">Editar</button>
+      <button class="btn-cancel" style="flex:1;color:#c0392b;border-color:#f5c6c6" onclick="deletePaciente('${p.id}')">Remover</button>
+    </div>`;
+  document.getElementById('detail-overlay').classList.remove('hidden');
+}
+
+function closeDetail(e){if(e.target===document.getElementById('detail-overlay')){document.getElementById('detail-overlay').classList.add('hidden');selectedId=null;render()}}
+
+function openModal(){
+  document.getElementById('f-id').value='';
+  document.getElementById('modal-title').textContent='Novo Paciente';
+  ['nome','whats','email','cidade','estado','pais','obs'].forEach(id=>document.getElementById('f-'+id).value='');
+  document.getElementById('f-obj').value='';
+  document.getElementById('f-exc').value='';
+  document.getElementById('f-comp').value=5;
+  document.getElementById('f-comp-val').textContent=5;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.add('hidden')}
+function closeModalOut(e){if(e.target===document.getElementById('modal-overlay'))closeModal()}
+
+function editPaciente(id){
+  const p=patients.find(x=>x.id===id);if(!p)return;
+  document.getElementById('detail-overlay').classList.add('hidden');
+  document.getElementById('f-id').value=id;
+  document.getElementById('modal-title').textContent='Editar Paciente';
+  document.getElementById('f-nome').value=p.nome||'';
+  document.getElementById('f-whats').value=p.whats||'';
+  document.getElementById('f-email').value=p.email||'';
+  document.getElementById('f-obj').value=p.obj||'';
+  document.getElementById('f-exc').value=p.exc||'';
+  document.getElementById('f-cidade').value=p.cidade||'';
+  document.getElementById('f-estado').value=p.estado||'';
+  document.getElementById('f-pais').value=p.pais||'';
+  document.getElementById('f-comp').value=p.comp||5;
+  document.getElementById('f-comp-val').textContent=p.comp||5;
+  document.getElementById('f-obs').value=p.obs||'';
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+
+function savePaciente(){
+  const nome=document.getElementById('f-nome').value.trim();
+  const whats=document.getElementById('f-whats').value.trim();
+  const obj=document.getElementById('f-obj').value;
+  if(!nome||!whats||!obj){alert('Preencha nome, WhatsApp e objetivo.');return}
+  const id=document.getElementById('f-id').value;
+  const today=new Date().toISOString().slice(0,10);
+  const data={
+    nome,whats,obj,
+    email:document.getElementById('f-email').value.trim(),
+    exc:document.getElementById('f-exc').value,
+    cidade:document.getElementById('f-cidade').value.trim(),
+    estado:document.getElementById('f-estado').value.trim().toUpperCase(),
+    pais:document.getElementById('f-pais').value.trim()||'Brasil',
+    comp:Number(document.getElementById('f-comp').value),
+    obs:document.getElementById('f-obs').value.trim()
+  };
+  if(id){
+    const i=patients.findIndex(x=>x.id===id);
+    if(i>-1)patients[i]={...patients[i],...data};
+  } else {
+    seq++;
+    patients.unshift({id:Date.now().toString(),seq,cadastro:today,...data});
+  }
+  persist();closeModal();render();
+}
+
+function deletePaciente(id){
+  if(!confirm('Remover este paciente?'))return;
+  patients=patients.filter(x=>x.id!==id);
+  if(selectedId===id){selectedId=null;document.getElementById('detail-overlay').classList.add('hidden')}
+  persist();render();
+}
+
+// dados de exemplo
+if(!patients.length){
+  const hoje=new Date().toISOString().slice(0,10);
+  patients=[
+    {id:'1',seq:1,nome:'Ana Paula Souza',whats:'(13) 99811-2233',email:'anapaula@email.com',obj:'Emagrecimento',exc:'Pratica exercício',cidade:'Praia Grande',estado:'SP',pais:'Brasil',comp:9,cadastro:'2024-01-07',obs:''},
+    {id:'2',seq:2,nome:'Bruno Mendes',whats:'(11) 97654-3210',email:'bruno@email.com',obj:'Hipertrofia',exc:'Pratica exercício',cidade:'São Paulo',estado:'SP',pais:'Brasil',comp:10,cadastro:'2024-01-07',obs:''},
+    {id:'3',seq:3,nome:'Carla Ferreira',whats:'(21) 98888-0001',email:'carla@email.com',obj:'Definição muscular',exc:'Não pratica',cidade:'Rio de Janeiro',estado:'RJ',pais:'Brasil',comp:8,cadastro:'2024-01-08',obs:''},
+    {id:'4',seq:4,nome:'Diego Costa',whats:'(13) 99222-3344',email:'diego@email.com',obj:'Recomposição corporal',exc:'Pratica exercício',cidade:'Santos',estado:'SP',pais:'Brasil',comp:7,cadastro:'2024-01-09',obs:''},
+    {id:'5',seq:5,nome:'Eliana Rodrigues',whats:'(11) 98765-4321',email:'eliana@email.com',obj:'Saúde geral',exc:'Não pratica',cidade:'Campinas',estado:'SP',pais:'Brasil',comp:6,cadastro:'2024-01-09',obs:''},
+  ];
+  seq=5;persist();
+}
+
+render();
+</script>
+</body>
+</html>
